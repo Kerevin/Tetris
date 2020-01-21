@@ -24,7 +24,8 @@ import tetris.Shape.Block;
  *
  * @author Personal Computer
  */
-public class Tetris extends Application {
+public class Tetris extends Application
+{
 
 	public static int size = 25;
 	public static final int MOVE = 25;
@@ -37,19 +38,22 @@ public class Tetris extends Application {
 	public static long preTime = 0;
 
 	private void createGrid() {
-		for (int[] grid : grids) {
+		for (int[] grid : grids)
+		{
 			Arrays.fill(grid, 0);
 		}
 	}
 
 	public void run() {
 
-		AnimationTimer timer = new AnimationTimer() {
+		AnimationTimer timer = new AnimationTimer()
+		{
 
 			@Override
 			public void handle(long now) {
-				if (now - preTime >= 400000000) {
-					update();
+				if (now - preTime >= 400000000)
+				{
+					//update();
 					preTime = now;
 				}
 
@@ -67,14 +71,19 @@ public class Tetris extends Application {
 		root.setPrefSize(XMAX + 150, YMAX);
 
 		Scene scene = new Scene(root);
-		scene.setOnKeyPressed(e -> {
-			switch (e.getCode()) {
+		scene.setOnKeyPressed(e ->
+		{
+			switch (e.getCode())
+			{
 
 				case LEFT:
 					s.moveLeft();
 					break;
 				case RIGHT:
 					s.moveRight();
+					break;
+				case UP:
+					s.moveUp();
 					break;
 
 			}

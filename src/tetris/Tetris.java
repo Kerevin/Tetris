@@ -24,8 +24,7 @@ import tetris.Shape.Block;
  *
  * @author Personal Computer
  */
-public class Tetris extends Application
-{
+public class Tetris extends Application {
 
 	public static int size = 25;
 	public static final int MOVE = 25;
@@ -34,26 +33,24 @@ public class Tetris extends Application
 	public static int YMAX = SIZE * 24;
 	public static int[][] grids = new int[XMAX / SIZE][YMAX / SIZE];
 	public static Pane root = new Pane();
-	Shape s = new Shape(XMAX / 2, 200, ((int) (Math.random() * 7)));
+	Shape s = new Shape(XMAX / 2, 100, (int) (Math.random() * 7));
+	Shape nextOb = new Shape(XMAX + 25, 50, (int) (Math.random() * 7));
 	public static long preTime = 0;
 
 	private void createGrid() {
-		for (int[] grid : grids)
-		{
-			Arrays.fill(grid, 0);
+		for (int[] grid : grids) {
+			Arrays.fill(grid, (int) 0);
 		}
 	}
 
 	public void run() {
 
-		AnimationTimer timer = new AnimationTimer()
-		{
+		AnimationTimer timer = new AnimationTimer() {
 
 			@Override
 			public void handle(long now) {
-				if (now - preTime >= 400000000)
-				{
-					//update();
+				if (now - preTime >= 500000000) {
+					update();
 					preTime = now;
 				}
 
@@ -68,13 +65,12 @@ public class Tetris extends Application
 	public void start(Stage primaryStage) {
 		createGrid();
 		root.getChildren().addAll(s.getNode());
+		root.getChildren().addAll(nextOb.getNode());
 		root.setPrefSize(XMAX + 150, YMAX);
 
 		Scene scene = new Scene(root);
-		scene.setOnKeyPressed(e ->
-		{
-			switch (e.getCode())
-			{
+		scene.setOnKeyPressed(e -> {
+			switch (e.getCode()) {
 
 				case LEFT:
 					s.moveLeft();
@@ -90,7 +86,7 @@ public class Tetris extends Application
 		});
 		run();
 		primaryStage.setScene(scene);
-		primaryStage.setTitle("Hello World!");
+		primaryStage.setTitle("Tetris");
 
 		primaryStage.show();
 	}

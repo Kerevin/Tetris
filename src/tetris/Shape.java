@@ -6,8 +6,10 @@
 package tetris;
 
 import java.util.ArrayList;
+import java.util.List;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.util.Pair;
 
 /**
  *
@@ -52,17 +54,17 @@ public class Shape {
 	private static String[][] I
 			= {
 				{
-					"..0..",
-					"..0..",
-					"..0..",
-					"..0..",
-					"....."
-				},
-				{
 					".....",
 					"0000.",
 					".....",
 					".....",
+					"....."
+				},
+				{
+					"..0..",
+					"..0..",
+					"..0..",
+					"..0..",
 					"....."
 				}
 			};
@@ -174,16 +176,18 @@ public class Shape {
 				}
 			};
 	public static String[][][] shapes = {S, Z, I, O, J, L, T};
-	public static Color[] color = {Color.SLATEGREY, Color.DARKGOLDENROD, Color.INDIANRED, Color.FORESTGREEN, Color.CADETBLUE, Color.HOTPINK, Color.SANDYBROWN};
+	public static Color[] colorTable = {Color.SLATEGREY, Color.DARKGOLDENROD, Color.INDIANRED, Color.FORESTGREEN, Color.CADETBLUE, Color.HOTPINK, Color.SANDYBROWN};
+	public Color color;
 	public String[][] shape;
 	public int rotation = 0;
 	public int x0, y0;
 	public ArrayList<Block> block = new ArrayList();
+	public boolean isPlaced = false; // check if block is placed or not.
 
 	public class Block extends Rectangle {
 
 		Block(int x, int y, Color color) {
-			super(x, y, Tetris.SIZE, Tetris.size);
+			super(x, y, Tetris.SIZE - 2, Tetris.SIZE - 2);
 			this.setFill(color);
 		}
 
@@ -203,31 +207,50 @@ public class Shape {
 	}
 
 	private void redraw() {
-		int index = 0;
 
+		int index = 0;
+		int[][] newPosition = new int[block.size()][2];
+
+		boolean isMove = true;
+
+		// Check if turning pose is valid 
+		// There is still a space to turn
 		for (int line = 0; line < shape[rotation].length; line++) {
 			for (int row = 0; row < shape[rotation][line].length(); row++) {
 				if (shape[rotation][line].charAt(row) == '0') {
-					block.get(index).setPosition(this.x0 + (line) * Tetris.SIZE, this.y0 + (row) * Tetris.SIZE);
+					int x = this.x0 + (line) * Tetris.SIZE;
+					int y = this.y0 + (row) * Tetris.SIZE;
+					if (x < Tetris.XMAX && x >= 0 && y < Tetris.YMAX && y >= 0 && Tetris.grids[(int) x / Tetris.SIZE][(int) y / Tetris.SIZE] == 0) {
+						newPosition[index][0] = x;
+						newPosition[index][1] = y;
+						index++;
+					}
+					else {
 
-					index++;
-
+						isMove = false;
+						break;
+					}
 				}
 			}
 		}
-		printCoordinate();
-
+		if (isMove) {
+			// Turning to another pose //
+			for (int i = 0; i < index; i++) {
+				block.get(i).setPosition(newPosition[i][0], newPosition[i][1]);
+			}
+		}
 	}
 
 	public Shape(int x, int y, int shapeIndex) {
 
-		shape = shapes[shapeIndex];
+		this.shape = shapes[shapeIndex];
 		this.x0 = x;
 		this.y0 = y;
+		this.color = colorTable[shapeIndex];
 		for (int line = 0; line < shape[rotation].length; line++) {
 			for (int row = 0; row < shape[rotation][line].length(); row++) {
 				if (shape[rotation][line].charAt(row) == '0') {
-					block.add(new Block(x + line * Tetris.SIZE, y + row * Tetris.SIZE, color[shapeIndex]));
+					block.add(new Block(x + line * Tetris.SIZE, y + row * Tetris.SIZE, color));
 
 				}
 			}
@@ -246,54 +269,98 @@ public class Shape {
 	}
 
 	public void moveDown() {
-		int move = 1;
+		boolean move = true;
 		for (Block s : block) {
+			// Check if there is still an available move //
 			if (s.getY() + Tetris.MOVE < Tetris.YMAX) {
-				int availableMove = Tetris.grids[(int) s.getX() / Tetris.SIZE][(int) s.getY() / Tetris.SIZE];
-				if (availableMove == 0) {
-					move = 1;
-				}
-				else {
-					move = 0;
+				int availableMove = Tetris.grids[(int) s.getX() / Tetris.SIZE][((int) s.getY() / Tetris.SIZE) + 1];
+				if (availableMove == 1) {
+					move = false;
+					break;
 				}
 			}
 			else {
-				move = 0;
+				move = false;
+				break;
 			}
 		}
-		if (move == 1) {
+		// If there is a space to move
+		if (move == true) {
 			block.forEach((Block s) -> {
-				if (this.y0 < Tetris.YMAX) {
-					int availableMove = Tetris.grids[(int) s.getX() / Tetris.SIZE][(int) s.getY() / Tetris.SIZE];
-					if (availableMove == 0) {
-						s.setY(s.getY() + Tetris.MOVE);
-
-					}
-					else {
-
-					}
-				}
-
+				s.setY(s.getY() + Tetris.MOVE);
 			});
 			this.y0 += Tetris.MOVE;
 
 		}
 		else {
+			// Make a move 
+			block.forEach((Block s) -> {
+				Tetris.grids[(int) s.getX() / Tetris.SIZE][((int) s.getY() / Tetris.SIZE)] = 1;
 
+			});
+			this.isPlaced = true;
 		}
 	}
 
 	public void moveLeft() {
-		block.forEach(s -> {
-			s.setTranslateX(s.getTranslateX() - Tetris.MOVE);
-		});
-		this.x0 -= Tetris.MOVE;
+		boolean move = true;
+		for (Block s : block) {
+			// Check if there is still an available move //
+			if (s.getX() - Tetris.MOVE >= 0) {
+				try {
+					int availableMove = Tetris.grids[((int) s.getX() / Tetris.SIZE) - 1][(int) s.getY() / Tetris.SIZE];
+					if (availableMove == 1) {
+						move = false;
+						break;
+					}
+				} catch (Exception e) {
+					System.out.println("moving left error");
+					System.out.println(s.getX() + " " + s.getY());
+				}
+
+			}
+			else {
+				move = false;
+				break;
+			}
+		}
+		if (move) {
+			block.forEach(s -> {
+				s.setX(s.getX() - Tetris.MOVE);
+			});
+			this.x0 -= Tetris.MOVE;
+		}
+
 	}
 
 	public void moveRight() {
-		block.forEach(s -> {
-			s.setTranslateX(s.getTranslateX() + Tetris.MOVE);
-		});
-		this.x0 += Tetris.MOVE;
+		boolean move = true;
+		for (Block s : block) {
+			// Check if there is still an available move //
+			if (s.getX() + Tetris.MOVE <= Tetris.XMAX - Tetris.SIZE) {
+				try {
+					int availableMove = Tetris.grids[((int) s.getX() / Tetris.SIZE) + 1][(int) s.getY() / Tetris.SIZE];
+					if (availableMove == 1) {
+						move = false;
+						break;
+					}
+				} catch (Exception e) {
+					System.out.println("moving right error");
+					System.out.println(s.getX() + " " + s.getY());
+				}
+
+			}
+			else {
+				move = false;
+				break;
+			}
+		}
+		if (move) {
+			block.forEach(s -> {
+				s.setX(s.getX() + Tetris.MOVE);
+			});
+			this.x0 += Tetris.MOVE;
+		}
+
 	}
 }

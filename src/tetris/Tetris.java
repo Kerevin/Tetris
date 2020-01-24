@@ -19,15 +19,18 @@ import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import tetris.Shape.Block;
+import static tetris.Shape.blockImg;
 
 /**
  *
@@ -42,13 +45,16 @@ public class Tetris extends Application {
 	public static int YMAX = SIZE * 24;
 	public static int[][] grids = new int[XMAX / SIZE][YMAX / SIZE];
 	public static Pane root = new Pane();
+	public static Button pauseBtn;
+
+	public static boolean running = true;
 	public static Text scoreText;
 	private static int top = 0;
 	public static int score = 0;
 
 	ArrayList<Rectangle> next;
-	Shape currentShape = new Shape(XMAX / 4, -25, (int) (Math.random() * 10) % 7);
-	Shape nextShape = new Shape(XMAX / 4, -25, (int) (Math.random() * 10) % 7);
+	Shape currentShape = new Shape(XMAX / 4, 0, (int) (Math.random() * 10 + 1) % 7);
+	Shape nextShape = new Shape(XMAX / 4, 0, (int) (Math.random() * 10 + 1) % 7);
 
 	public static long preTime = 0;
 
@@ -64,12 +70,16 @@ public class Tetris extends Application {
 
 			@Override
 			public void handle(long now) {
-				if (now - preTime >= 400000000) {
-					// Fall down every 0.4 seconds
-					update();
-					preTime = now;
-				}
 
+				if (running == true) {
+					update();
+					if (now - preTime >= 350000000) {
+						// Fall down every 0.35 seconds
+
+						currentShape.moveDown();
+						preTime = now;
+					}
+				}
 			}
 
 		};
@@ -87,29 +97,54 @@ public class Tetris extends Application {
 		scoreText.setX(XMAX + 5);
 		scoreText.setY(50);
 
-		next = getNextShape(XMAX + 25, 100, nextShape.shape, nextShape.color);
+		next = getNextShape(XMAX + 25, 100, nextShape.shape, nextShape.position);
 		root.getChildren().addAll(line, scoreText);
 		root.getChildren().addAll(currentShape.getNode());
 		root.getChildren().addAll(next);
 		root.setPrefSize(XMAX + 150, YMAX);
 
+		pauseBtn = new Button("Pause");
+		pauseBtn.setPrefSize(75, 50);
+		pauseBtn.setTranslateX(XMAX + 50);
+		pauseBtn.setTranslateY(300);
+
+		pauseBtn.setOnMouseClicked(event -> {
+			if (running == true) {
+				running = false;
+				pauseBtn.setText("Resume");
+				System.out.println(running);
+			}
+			else {
+				running = true;
+				pauseBtn.setText("Pause");
+				System.out.println(running);
+			}
+		});
+		root.getChildren().add(pauseBtn);
+
 		Scene scene = new Scene(root);
 		scene.setOnKeyPressed(e -> {
-			switch (e.getCode()) {
-				case LEFT:
-					currentShape.moveLeft();
-					break;
-				case RIGHT:
-					currentShape.moveRight();
-					break;
-				case UP:
-					currentShape.moveUp();
-					break;
-				case DOWN:
-					currentShape.moveDown();
-					score += 1;
-					break;
+			if (running == true) {
+				switch (e.getCode()) {
+					case LEFT:
+						currentShape.moveLeft();
+						break;
+					case RIGHT:
+						currentShape.moveRight();
+						break;
+					case UP:
+						currentShape.moveUp();
+						break;
+					case DOWN:
+						if (currentShape.isPlaced == false) {
+							currentShape.moveDown();
+							score += 1;
+						}
+
+						break;
+				}
 			}
+
 		});
 		run();
 		primaryStage.setScene(scene);
@@ -173,7 +208,7 @@ public class Tetris extends Application {
 	}
 
 	void update() {
-		currentShape.moveDown();
+
 		scoreText.setText("Score: " + score);
 		getBlocks().forEach(b -> {
 			if ((int) b.getY() < Tetris.MOVE) {
@@ -195,16 +230,17 @@ public class Tetris extends Application {
 		else {
 			this.top = 0;
 		}
-		if (top == 15) {
+		if (top == 10) {
 			System.exit(0);
 		}
 		if (currentShape.isPlaced == true) {
 			removeRows();
+
 			Shape a = nextShape;
 			root.getChildren().removeAll(next);
-			nextShape = new Shape(XMAX / 4, -25, (int) (Math.random() * 10) % 7);
 
-			next = getNextShape(XMAX + 25, 100, nextShape.shape, nextShape.color);
+			nextShape = new Shape(XMAX / 4, 0, (int) (Math.random() * 10) % 7);
+			next = getNextShape(XMAX + 25, 100, nextShape.shape, nextShape.position);
 
 			currentShape = a;
 			root.getChildren().addAll(a.getNode());
@@ -213,13 +249,14 @@ public class Tetris extends Application {
 		}
 	}
 
-	public ArrayList<Rectangle> getNextShape(int x, int y, String[][] shape, Color color) {
+	public ArrayList<Rectangle> getNextShape(int x, int y, String[][] shape, int index) {
+		// Show next shape in advanced
 		ArrayList<Rectangle> block = new ArrayList<Rectangle>();
 		for (int line = 0; line < shape[0].length; line++) {
 			for (int row = 0; row < shape[0][line].length(); row++) {
 				if (shape[0][line].charAt(row) == '0') {
 					Rectangle rec = new Rectangle(x + line * SIZE, y + row * SIZE, SIZE - 2, SIZE - 2);
-					rec.setFill(color);
+					rec.setFill(new ImagePattern(new Image(Shape.class.getResource(blockImg[index]).toString())));
 					block.add(rec);
 
 				}

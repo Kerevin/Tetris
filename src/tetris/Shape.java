@@ -7,7 +7,9 @@ package tetris;
 
 import java.util.ArrayList;
 import java.util.List;
+import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Pair;
 
@@ -61,10 +63,10 @@ public class Shape {
 					"....."
 				},
 				{
-					"..0..",
-					"..0..",
-					"..0..",
-					"..0..",
+					"...0.",
+					"...0.",
+					"...0.",
+					"...0..",
 					"....."
 				}
 			};
@@ -176,7 +178,8 @@ public class Shape {
 				}
 			};
 	public static String[][][] shapes = {S, Z, I, O, J, L, T};
-	public static Color[] colorTable = {Color.SLATEGREY, Color.DARKGOLDENROD, Color.INDIANRED, Color.FORESTGREEN, Color.CADETBLUE, Color.HOTPINK, Color.SANDYBROWN};
+	public static String[] blockImg = {"/blockImg/s.png", "/blockImg/z.png", "/blockImg/i.png", "/blockImg/o.png", "/blockImg/j.png", "/blockImg/l.png", "/blockImg/t.png"};
+	public int position;
 	public Color color;
 	public String[][] shape;
 	public int rotation = 0;
@@ -184,11 +187,28 @@ public class Shape {
 	public ArrayList<Block> block = new ArrayList();
 	public boolean isPlaced = false; // check if block is placed or not.
 
+	// Constructor 
+	public Shape(int x, int y, int shapeIndex) {
+		this.position = shapeIndex;
+		this.shape = shapes[position];
+		this.x0 = x;
+		this.y0 = y;
+		for (int line = 0; line < shape[rotation].length; line++) {
+			for (int row = 0; row < shape[rotation][line].length(); row++) {
+				if (shape[rotation][line].charAt(row) == '0') {
+					block.add(new Block(x + line * Tetris.SIZE, y + row * Tetris.SIZE));
+
+				}
+			}
+		}
+
+	}
+
 	public class Block extends Rectangle {
 
-		Block(int x, int y, Color color) {
+		Block(int x, int y) {
 			super(x, y, Tetris.SIZE - 2, Tetris.SIZE - 2);
-			this.setFill(color);
+			this.setFill(new ImagePattern(new Image(Shape.class.getResource(blockImg[position]).toString())));
 		}
 
 		public void setPosition(int x, int y) {
@@ -239,27 +259,12 @@ public class Shape {
 				block.get(i).setPosition(newPosition[i][0], newPosition[i][1]);
 			}
 		}
-	}
-
-	public Shape(int x, int y, int shapeIndex) {
-
-		this.shape = shapes[shapeIndex];
-		this.x0 = x;
-		this.y0 = y;
-		this.color = colorTable[shapeIndex];
-		for (int line = 0; line < shape[rotation].length; line++) {
-			for (int row = 0; row < shape[rotation][line].length(); row++) {
-				if (shape[rotation][line].charAt(row) == '0') {
-					block.add(new Block(x + line * Tetris.SIZE, y + row * Tetris.SIZE, color));
-
-				}
-			}
+		else {
+			rotation = (rotation - 1) % shape.length;
 		}
-
 	}
 
 	public ArrayList<Block> getNode() {
-
 		return block;
 	}
 

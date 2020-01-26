@@ -268,12 +268,22 @@ public class Shape {
 		return block;
 	}
 
-	public void moveUp() {
+	public void rotateUp() {
 		this.rotation = (this.rotation + 1) % shape.length;
 		this.redraw();
 	}
 
-	public void moveDown() {
+	public void rotateDown() {
+		if (this.rotation == 0) {
+			this.rotation = shape.length - 1;
+		}
+		else {
+			this.rotation -= 1;
+		}
+		this.redraw();
+	}
+
+	public void fallDown() {
 		boolean move = true;
 		for (Block s : block) {
 			// Check if there is still an available move //

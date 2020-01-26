@@ -20,6 +20,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -46,7 +47,8 @@ public class Tetris extends Application {
 	public static int[][] grids = new int[XMAX / SIZE][YMAX / SIZE];
 	public static Pane root = new Pane();
 	public static Button pauseBtn;
-
+	public static Button restartBtn;
+	public static Button exitBtn;
 	public static boolean running = true;
 	public static Text scoreText;
 	private static int top = 0;
@@ -76,7 +78,7 @@ public class Tetris extends Application {
 					if (now - preTime >= 350000000) {
 						// Fall down every 0.35 seconds
 
-						currentShape.moveDown();
+						currentShape.fallDown();
 						preTime = now;
 					}
 				}
@@ -85,6 +87,24 @@ public class Tetris extends Application {
 		};
 
 		timer.start();
+	}
+
+	public void restart() {
+		getBlocks().forEach(e -> {
+			root.getChildren().remove(e);
+		});
+		Shape a = nextShape;
+		root.getChildren().removeAll(next);
+
+		nextShape = new Shape(XMAX / 4, 0, (int) (Math.random() * 10) % 7);
+		next = getNextShape(XMAX + 25, 100, nextShape.shape, nextShape.position);
+
+		currentShape = a;
+		root.getChildren().addAll(a.getNode());
+		root.getChildren().addAll(next);
+		createGrid();
+		score = 0;
+		scoreText.setText("Score: ");
 	}
 
 	@Override
@@ -103,24 +123,46 @@ public class Tetris extends Application {
 		root.getChildren().addAll(next);
 		root.setPrefSize(XMAX + 150, YMAX);
 
+		// set pause button
 		pauseBtn = new Button("Pause");
+		pauseBtn.setFocusTraversable(false);
 		pauseBtn.setPrefSize(75, 50);
 		pauseBtn.setTranslateX(XMAX + 50);
-		pauseBtn.setTranslateY(300);
-
+		pauseBtn.setTranslateY(375);
 		pauseBtn.setOnMouseClicked(event -> {
 			if (running == true) {
 				running = false;
 				pauseBtn.setText("Resume");
-				System.out.println(running);
 			}
 			else {
 				running = true;
 				pauseBtn.setText("Pause");
-				System.out.println(running);
 			}
 		});
+
 		root.getChildren().add(pauseBtn);
+
+		// set restart button 
+		restartBtn = new Button("Restart");
+		restartBtn.setFocusTraversable(false);
+		restartBtn.setPrefSize(75, 50);
+		restartBtn.setTranslateX(XMAX + 50);
+		restartBtn.setTranslateY(300);
+		restartBtn.setOnMouseClicked(event -> {
+			restart();
+		});
+		root.getChildren().add(restartBtn);
+
+		// set exit button 
+		exitBtn = new Button("Restart");
+		exitBtn.setFocusTraversable(false);
+		exitBtn.setPrefSize(75, 50);
+		exitBtn.setTranslateX(XMAX + 50);
+		exitBtn.setTranslateY(450);
+		exitBtn.setOnMouseClicked(event -> {
+			System.exit(0);
+		});
+		root.getChildren().add(exitBtn);
 
 		Scene scene = new Scene(root);
 		scene.setOnKeyPressed(e -> {
@@ -133,15 +175,29 @@ public class Tetris extends Application {
 						currentShape.moveRight();
 						break;
 					case UP:
-						currentShape.moveUp();
+						currentShape.rotateUp();
 						break;
 					case DOWN:
+						currentShape.rotateDown();
+						break;
+
+					case SPACE:
 						if (currentShape.isPlaced == false) {
-							currentShape.moveDown();
+							currentShape.fallDown();
 							score += 1;
 						}
-
 						break;
+				}
+
+			}
+			if (e.getCode().equals(KeyCode.ENTER)) {
+				if (running) {
+					running = false;
+					pauseBtn.setText("Reseum");
+				}
+				else {
+					running = true;
+					pauseBtn.setText("Pause");
 				}
 			}
 
@@ -150,6 +206,7 @@ public class Tetris extends Application {
 		primaryStage.setScene(scene);
 		primaryStage.setTitle("Tetris");
 		primaryStage.setResizable(false);
+		primaryStage.getIcons().add(new Image("icon.png"));
 		primaryStage.show();
 	}
 
